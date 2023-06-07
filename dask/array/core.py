@@ -1232,17 +1232,17 @@ def store(
             for s, n in zip(sources, map_names)
         )
 
-    elif compute:
-        store_dsk = HighLevelGraph(layers, dependencies)
-        compute_as_if_collection(Array, store_dsk, map_keys, **kwargs)
-        return None
-
     else:
         key = "store-" + tokenize(map_names)
         layers[key] = {key: map_keys}
         dependencies[key] = set(map_names)
         store_dsk = HighLevelGraph(layers, dependencies)
-        return Delayed(key, store_dsk)
+        task = Delayed(key, store_dsk)
+        if compute:
+            compute(task)
+            return None
+        else:
+            return task
 
 
 def blockdims_from_blockshape(shape, chunks):
